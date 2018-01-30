@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		body,html{
+			height: 100%;
+		}
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		#select { width: 620px; margin: 100px; }
+		#select .select-wrap {
+			position: relative;
+			width: 100%;
+			height: 50px;
+			line-height: 50px;
+			text-align: center;
+			cursor: pointer;
+		}
+		#select > .select-wrap > .arrowIcon {
+			position: absolute;
+			right: 40px;
+			top: 16px;
+			width: 20px;
+			height: 20px;
+			transform: rotate(0deg);
+			transition: transform .3s;
+			background: url('./btn_cal_arrow_down.png') no-repeat center;
+		}
+		#select > .select-wrap > .arrowIcon.active { transform: rotate(180deg);}
+		#select > .select-wrap > input {
+			width: 100%;
+			height: 100%;
+			text-indent: 30px;
+			color: #263238;
+			font: normal 700 16px/1 'PingFangSC-Semibold','microsoft yahei';
+			border: 1px solid #dcdfe6;
+			border-radius: 4px;
+		}
+		#select>.select-wrap > input.active { border-color: #08D0EE;}
+		#select>.select-wrap > input::-webkit-input-placeholder { 
+			font-size: 18px;
+			color: #8597A1;
+			line-height: 16px;
+			text-indent: 30px;
+			font-weight: 400;
+		} 
+		input:-moz-placeholder { 
+			font-size: 18px;
+			color: #8597A1;
+			line-height: 16px;
+			text-indent: 30px;
+			font-weight: 400;
+		} 
+		.list_sport_name {
+			width: 100%;
+			max-height: 340px;
+			overflow-x:  hidden;
+			overflow-y: auto;
+		}
+		.dorpList li {
+			height: 60px;
+			line-height: 60px;
+			cursor: pointer;
+		}
+		.dorpList li strong {
+			margin-right: 10px;
+			line-height: 18px;
+			font-size: 18px;
+			color: #08D0EE;
+		}
+		.dorpList li,
+		.list_sport_name li p,
+		.list_index .filter { text-indent: 30px; }
+		.list_sport_name li p {
+			height: 20px;
+			opacity: 0.2;
+			font-weight: 700;
+			background: #D8E0E4;
+		}
+		.dorpList li:hover { background-color: #E7ECEF;}
+		.list_index { /* 筛选头部A-Z */
+			height: 60px;
+			line-height: 60px;
+			overflow: hidden;
+			text-align: center;
+			border: 1px solid #E7ECEF;
+			border-radius: 8px;
+			background-color: #FDFDFD;
+		}
+		.list_index .filter { margin-right: 30px; color: #8597A1;} /* 筛选 */
+		.list_index > li, 
+		.list_index .filter { 
+			float: left;
+			height: 100%;
+			line-height: 60px;
+			color: #8697A1;
+			font-size: 14px;
+		}
+		.list_index > li { cursor: pointer; }
+		.dropdown {
+			width: 100%;
+			max-height: 600px;
+			border: 1px solid #E7ECEF;
+			border-radius: 8px;
+		}
+		.ty-alphaList { letter-spacing: 10px; line-height: 18px;}
+		/* A-Z检索点击动画 */
+		.ty-alphaList.active {
+			transition: animation .5s;
+    		animation: animate .5s linear;
+    		color: #08D0EE;
+    		font-size: 18px;
+		}
+		@keyframes animate {
+		    0% {transform: scale(0.5); opacity: 0.0;}
+		    50% {transform: scale(1.2); opacity: 0.3;}
+		    80% {transform: scale(1.5); opacity: 0.5;}
+		    100% {transform: scale(0.5); opacity: 0.0;}
+  		}
+  		@-webkit-keyframes animate { /* Safari and Chrome */
+		    0% {-webkit-transform: scale(0.5); opacity: 0.0;}
+		    50% {-webkit-transform: scale(1.2); opacity: 0.3;}
+		    80% {-webkit-transform: scale(1.5); opacity: 0.5;}
+		    100% {-webkit-transform: scale(0.5); opacity: 0.0;}
+  		}
+  		/* 修改滚动条样式 -start */
+	  .list_sport_name::-webkit-scrollbar { width: 6px; height: 50px;}
+	  .list_sport_name::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
+	    border-radius: 4px;
+	    -webkit-box-shadow: inset 0 0 5px rgba(144,147,153,.2);
+	    background: rgba(144,147,153,.2);
+	  }
+	  .list_sport_name::-webkit-scrollbar-track {/*滚动条里面轨道*/
+	    -webkit-box-shadow: inset 0 0 5px rgba(144,147,153,.2);
+	    border-radius: 0px;
+	    background: rgba(144,147,153,.2);
+	    transition: .3s background-color;
+	  }
+  	  /* 修改滚动条 -end */
+	</style>
+</head>
+<body>
+	<div id="app">
+		<div id="select">
+			<div class="select-wrap" @click="toggle">
+				<input type="text" readonly placeholder="请选择" v-model="searchKey"
+				:class="{active: isActive}" @blur="hideList">
+				<span class="arrowIcon" :class="{active: iconBol}"></span>
+			</div>
+			<div class="dropdown" v-show="showSelectBol" >
+				<ul class="list_index">
+					<span class="filter">筛选</span>
+				    <li class="ty-alphaList" v-for="(item, index) in sportIndex"
+				    :class="{active: activeIndex === index}" :key='index' @click="setScoll(index)">{{item}}</li>
+				</ul>
+
+				<ul class="list_sport_name" ref="sportsList" id="dropdown">
+			    	<li v-for="(sports, index) in sportDatabase">
+				    	<p>{{sports.firstLetter}}</p>
+				    	<ul class="dorpList">
+				    	    <li v-for="sport in sports.users" @click="changeValue(sport)">
+				    	    	<strong>{{sport.majorKindName}}</strong>{{sport.activityName}}
+				    	    </li>
+				    	</ul>
+			    	</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="https://cdn.bootcss.com/vue/2.5.13/vue.js"></script>
+<script type="text/javascript">
+new Vue({
+  el: '#app',
+  data: {
+ 	sportDatabase: [
+		{
+		 'firstLetter': 'A',
+		  'users': [
+		   {'majorKindName': "阿敏", 'activityName': "13552687854"},
+		   {'majorKindName': "阿寿", 'activityName': "15252687889"},
+		   {'majorKindName': "阿豪", 'activityName': "13152686535"}
+		  ]},
+		{
+		 'firstLetter': 'B',
+		  'users': [
+		   {'majorKindName': "巴士", 'activityName': "13552687696"},
+		   {'majorKindName': "罢峡", 'activityName': "15252687025"},
+		   {'majorKindName': "拜拜", 'activityName': "13152686584"}
+		  ]},
+		{
+		 'firstLetter': 'C',
+		  'users': [
+		   {'majorKindName': "操蛋", 'activityName': "13552687814"},
+		   {'majorKindName': "操作", 'activityName': "15252687820"},
+		   {'majorKindName': "炒作", 'activityName': "13152686567"}
+		  ]},
+		{
+		 'firstLetter': 'D',
+		  'users': [
+		   {'majorKindName': "电话", 'activityName': "13552687897"},
+		   {'majorKindName': "店铺", 'activityName': "15252687808"},
+		   {'majorKindName': "电灯泡", 'activityName': "13152686574"}
+		  ]},
+		{
+		 'firstLetter': 'E',
+		  'users': [
+		   {'majorKindName': "饿了么", 'activityName': "13552687885"},
+		   {'majorKindName': "鄂州", 'activityName': "15252687856"}
+		  ]},
+		{
+		 'firstLetter': 'F',
+		  'users': [
+		   {'majorKindName': "分发", 'activityName': "13552687854"},
+		   {'majorKindName': "奋斗", 'activityName': "15252687889"},
+		   {'majorKindName': "奋战", 'activityName': "13152686535"},
+		    {'majorKindName': "粉色", 'activityName': "13152686535"}
+		  ]},
+		{
+		 'firstLetter': 'G',
+		  'users': [
+		   {'majorKindName': "刚刚", 'activityName': "13552687668"},
+		   {'majorKindName': "哥哥", 'activityName': "15252687867"},
+		   {'majorKindName': "广告", 'activityName': "13152686879"}
+		  ]},
+		{
+		 'firstLetter': 'H',
+		  'users': [
+		   {'majorKindName': "呵呵", 'activityName': "13552687823"},
+		   {'majorKindName': "哈哈", 'activityName': "152526878232"},
+		   {'majorKindName': "好好吃", 'activityName': "13152686233"},
+		   {'majorKindName': "嘿嘿嘿", 'activityName': "13152686245"},
+		   {'majorKindName': "哼哼哼", 'activityName': "13152686788"}
+		  ]}
+	],
+	searchKey: '',
+	showSelectBol: false,
+	iconBol: false,
+	activeIndex: 0,
+	isActive: false,
+  },
+  created () {
+  },
+  methods: { 
+  	toggle () { // 点击切换显示隐藏下拉列表
+  		this.isActive = !this.isActive
+  		this.showSelectBol = !this.showSelectBol
+  		this.iconBol = !this.iconBol
+  	},
+  	changeValue (obj) { // 改变input框的值
+  		console.log(obj)
+  		// this.$refs.inputVal.value = obj.majorKindName
+  		this.searchKey = obj.majorKindName
+  		this.showSelectBol = false
+  		this.isActive = false
+  		this.iconBol = !this.iconBol
+  	},
+  	// hideDropDown(){
+  	// 	console.log('test');
+  	// 	this.showSelectBol = false
+  	// 	this.iconBol = !this.iconBol
+  	// },
+	filterIndex (data) {
+		let result = []
+		for (let i = 0; i < data.length; i++) {
+			if(data[i].firstLetter) {
+				result.push(data[i].firstLetter)
+			}
+		}
+		return result
+	},
+	setScoll (index) {
+        event.preventDefault()
+        this.activeIndex = index
+		let ev = window.event || event
+		// ev.target.innerHTML
+		// 找到所有的P标签然后对其进行遍历 点击进行滚动条滚动
+		let aP = this.$refs.sportsList.getElementsByTagName('p')
+		for (let i = 0; i < aP.length; i++) {
+			if(aP[i].innerHTML === ev.target.innerHTML) {
+				dropdown.scrollTop = aP[i].offsetTop-select.offsetTop-112
+				console.log(dropdown.scrollTop)
+			}
+		}
+	},
+	hideList(){
+		// if(this.searchKey) return this.searchKey
+		// this.showSelectBol = !this.showSelectBol
+	}
+  },
+  computed: {
+    sportIndex () {
+	   return this.filterIndex(this.sportDatabase)
+	}
+  }
+})
+</script>
+</html>
